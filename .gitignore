@@ -1,0 +1,12 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+venv/
+
+# Secrets
+.env
+
+# Local vector store (rebuilt by `python main.py index`)
+chroma_db/

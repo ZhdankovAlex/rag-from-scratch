@@ -1,0 +1,39 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements*.txt
+
+      # sentence-transformers pulls torch; the default Linux wheel bundles CUDA
+      # (several GB). Tests never run a model, so the CPU build is enough.
+      - name: Install CPU-only torch
+        run: pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      # Settings in pyproject.toml; runs before the tests because it is fast.
+      - name: Lint
+        run: ruff check .
+
+      # Tests replace the embedding model and the LLMs with fakes; offline mode
+      # makes any accidental download fail instead of passing slowly.
+      - name: Run tests
+        env:
+          HF_HUB_OFFLINE: "1"
+          TRANSFORMERS_OFFLINE: "1"
+        run: python -m pytest -q

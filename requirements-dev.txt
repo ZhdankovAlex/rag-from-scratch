@@ -1,0 +1,7 @@
+-r requirements.txt
+pytest>=8.0
+# FastAPI TestClient
+httpx>=0.27
+# Pinned to a minor version: new ruff releases add rules and could fail CI
+# without any code change.
+ruff~=0.17.1
