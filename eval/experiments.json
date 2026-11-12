@@ -2,7 +2,7 @@
   "chunks": 637,
   "setups": [
     {
-      "label": "bge-small-en-v1.5 (англоязычная)",
+      "label": "bge-small-en-v1.5 (English-only)",
       "model": "BAAI/bge-small-en-v1.5",
       "current": false,
       "dev": {
@@ -23,7 +23,7 @@
       }
     },
     {
-      "label": "multilingual-e5-small, только текст фрагмента",
+      "label": "multilingual-e5-small, chunk text only",
       "model": "intfloat/multilingual-e5-small",
       "current": false,
       "dev": {
@@ -44,7 +44,7 @@
       }
     },
     {
-      "label": "+ заголовок «Документ > Раздел», без префиксов",
+      "label": "+ \"Document > Section\" title, no prefixes",
       "model": "intfloat/multilingual-e5-small",
       "current": false,
       "dev": {
@@ -65,7 +65,7 @@
       }
     },
     {
-      "label": "+ префиксы query: / passage: (текущий)",
+      "label": "+ query: / passage: prefixes (current)",
       "model": "intfloat/multilingual-e5-small",
       "current": true,
       "dev": {

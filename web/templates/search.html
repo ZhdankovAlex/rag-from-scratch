@@ -1,18 +1,18 @@
 {% extends "base.html" %}
-{% block title %}Поиск · Справка{% endblock %}
+{% block title %}Search · Docs Q&amp;A{% endblock %}
 {% block content %}
 <section class="card hero">
-  <h1>Поиск</h1>
-  <p class="muted">Только поиск по смыслу, без модели — работает мгновенно. Показывает, что увидит модель, если задать такой вопрос.</p>
+  <h1>Search</h1>
+  <p class="muted">Search by meaning only, without the model, so results come back at once. Shows what the model would be given for this question.</p>
   <form id="search-form" class="query-form">
-    <input type="search" id="sq" class="field" placeholder="Например: загрузка файлов" required>
-    <button class="primary" type="submit">Найти</button>
+    <input type="search" id="sq" class="field" placeholder="e.g. загрузка файлов" required>
+    <button class="primary" type="submit">Search</button>
   </form>
 </section>
 
 <section class="card" id="s-card" hidden>
-  <div class="card-head"><h2>Найдено</h2><span class="muted small" id="s-meta"></span></div>
-  <p class="muted small">Чем ближе сходство к 1, тем ближе текст по смыслу к запросу. Клик раскрывает текст целиком.</p>
+  <div class="card-head"><h2>Results</h2><span class="muted small" id="s-meta"></span></div>
+  <p class="muted small">The closer the similarity is to 1, the closer the text is in meaning to the query. Click a passage to see its full text.</p>
   <ol class="hits" id="s-hits"></ol>
 </section>
 {% endblock %}

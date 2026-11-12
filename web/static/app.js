@@ -4,7 +4,8 @@
 const $ = (sel, root = document) => root.querySelector(sel);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const pct = (x) => `${Math.round(x * 100)}%`;
-const fmt = (n) => Number(n).toLocaleString('ru-RU');
+const fmt = (n) => Number(n).toLocaleString('en-US');
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 async function api(path, body) {
   const response = await fetch(path, body === undefined ? {} : {
@@ -32,14 +33,14 @@ function setPill(id, state, text, title) {
 async function refreshStatus() {
   try {
     const s = await api('/api/status');
-    setPill('#st-index', s.chunks ? 'ok' : 'bad', s.chunks ? `база: ${fmt(s.chunks)} фрагм.` : 'база пуста',
-      s.chunks ? 'Сколько фрагментов документации в базе' : 'Нажмите «Обновить базу» на странице «Документы»');
+    setPill('#st-index', s.chunks ? 'ok' : 'bad', s.chunks ? `index: ${fmt(s.chunks)} chunks` : 'index is empty',
+      s.chunks ? 'Number of doc chunks in the index' : 'Click "Update index" on the Documents page');
     const o = s.ollama;
-    if (!o.running) setPill('#st-llm', 'bad', 'Ollama не запущена', `Нет ответа от ${o.url}: запустите приложение Ollama`);
-    else if (!o.model_pulled) setPill('#st-llm', 'warn', `нет модели ${o.model}`, `Скачайте модель: ollama pull ${o.model}`);
-    else setPill('#st-llm', 'ok', o.model, `Ollama на ${o.url}`);
+    if (!o.running) setPill('#st-llm', 'bad', 'Ollama is not running', `No reply from ${o.url}: start the Ollama app`);
+    else if (!o.model_pulled) setPill('#st-llm', 'warn', `no model ${o.model}`, `Pull the model: ollama pull ${o.model}`);
+    else setPill('#st-llm', 'ok', o.model, `Ollama at ${o.url}`);
   } catch (e) {
-    setPill('#st-index', 'bad', 'сервер недоступен');
+    setPill('#st-index', 'bad', 'server unreachable');
   }
 }
 
@@ -51,9 +52,9 @@ function hitItem(hit, citedNumber) {
   li.dataset.id = hit.id;
   li.innerHTML = `
     <div class="hit-head">
-      <span class="hit-rank" title="${citedNumber ? `Ответ ссылается на это место как [${citedNumber}]` : 'Место в выдаче поиска'}">${citedNumber || hit.rank}</span>
+      <span class="hit-rank" title="${citedNumber ? `The answer cites this as [${citedNumber}]` : 'Position in the search results'}">${citedNumber || hit.rank}</span>
       <div class="hit-title">${esc(hit.title)}<div class="hit-file">${esc(hit.file)}</div></div>
-      <div class="sim" title="Сходство по смыслу с вопросом"><span class="track"><i style="width:${Math.max(0, hit.similarity) * 100}%"></i></span><b>${hit.similarity.toFixed(2)}</b></div>
+      <div class="sim" title="How close in meaning to the question"><span class="track"><i style="width:${Math.max(0, hit.similarity) * 100}%"></i></span><b>${hit.similarity.toFixed(2)}</b></div>
     </div>
     <div class="hit-text">${esc(hit.text.replace(/^#{1,6} [^\n]*\n+/, ''))}</div>`;
   li.addEventListener('click', () => li.classList.toggle('open'));
@@ -74,7 +75,7 @@ function renderAnswer(text) {
     return `\u0000${blocks.length - 1}\u0000`;
   });
   src = src.replace(/`([^`\n]+)`/g, '<code>$1</code>').replace(/\*\*([^*\n]+)\*\*/g, '<b>$1</b>');
-  src = src.replace(/\[(\d+)\]/g, '<button type="button" class="cite" data-n="$1" title="Показать, откуда это">$1</button>');
+  src = src.replace(/\[(\d+)\]/g, '<button type="button" class="cite" data-n="$1" title="Show where this comes from">$1</button>');
   const html = src.split(/\n{2,}/).map((para) => {
     const lines = para.split('\n');
     if (lines.every((l) => /^\s*([-*]|\d+\.)\s+/.test(l))) {
@@ -105,7 +106,7 @@ function initAsk() {
   stopBtn.addEventListener('click', () => controller?.abort());
 
   // Leaving the page closes the stream and stops the model: ask first while an answer is being written.
-  const LEAVE_TEXT = 'Ответ ещё пишется. Уйти со страницы и остановить его?';
+  const LEAVE_TEXT = 'The answer is still being written. Leave the page and stop it?';
   let leaving = false;
   document.querySelectorAll('.sidenav a').forEach((link) => link.addEventListener('click', (e) => {
     if (!controller) return;
@@ -124,8 +125,8 @@ function initAsk() {
     $('#answer-card').hidden = false;
     $('#answer-text').innerHTML = renderAnswer(ev.answer);
     $('#answer-warn').hidden = !ev.unsupported;
-    $('#answer-meta').textContent = `${ev.model} · ${ev.seconds} с`;
-    $('#hits-meta').textContent = `ответ ссылается на ${ev.sources.length} из ${ev.results.length}`;
+    $('#answer-meta').textContent = `${ev.model} · ${ev.seconds} s`;
+    $('#hits-meta').textContent = `the answer cites ${ev.sources.length} of ${ev.results.length}`;
   }
 
   function renderHits(results, citedById = {}) {
@@ -157,8 +158,8 @@ function initAsk() {
     $('#hits-card').hidden = true;
 
     const started = Date.now();
-    let text = '', phase = 'Ищу в документации…';
-    const tick = () => { $('#wait-text').textContent = `${phase} ${Math.round((Date.now() - started) / 1000)} с`; };
+    let text = '', phase = 'Searching the docs…';
+    const tick = () => { $('#wait-text').textContent = `${phase} ${Math.round((Date.now() - started) / 1000)} s`; };
     $('#answer-wait').hidden = false;
     tick();
     timer = setInterval(tick, 500);
@@ -184,11 +185,11 @@ function initAsk() {
           const ev = JSON.parse(line);
           if (ev.type === 'results') {
             renderHits(ev.results);
-            $('#hits-meta').textContent = `${ev.results.length} мест`;
-            phase = 'Модель читает найденное и пишет ответ…';
+            $('#hits-meta').textContent = plural(ev.results.length, 'passage');
+            phase = 'The model is reading the passages and writing an answer…';
           } else if (ev.type === 'token') {
             text += ev.text;
-            phase = 'Модель пишет ответ…';
+            phase = 'The model is writing…';
             $('#answer-text').innerHTML = renderAnswer(text);
           } else if (ev.type === 'error') {
             throw new Error(ev.detail);
@@ -200,8 +201,8 @@ function initAsk() {
       }
     } catch (err) {
       if (err.name === 'AbortError') {
-        $('#answer-meta').textContent = `остановлено через ${Math.round((Date.now() - started) / 1000)} с`;
-        if (!text) $('#answer-text').innerHTML = '<p class="muted">Ответ остановлен до начала.</p>';
+        $('#answer-meta').textContent = `stopped after ${Math.round((Date.now() - started) / 1000)} s`;
+        if (!text) $('#answer-text').innerHTML = '<p class="muted">Stopped before the answer started.</p>';
       } else {
         $('#answer-text').innerHTML = '';  // a derailed reply is garbage: do not leave it on screen
         $('#answer-error').textContent = err.message;
@@ -249,7 +250,7 @@ function initSearch() {
       list.innerHTML = '';
       r.results.forEach((hit) => list.appendChild(hitItem(hit)));
       const files = new Set(r.results.map((h) => h.file)).size;
-      $('#s-meta').textContent = `${r.results.length} мест из ${files} документов · ${r.ms} мс`;
+      $('#s-meta').textContent = `${plural(r.results.length, 'passage')} from ${plural(files, 'document')} · ${r.ms} ms`;
     } catch (err) {
       $('#s-hits').innerHTML = `<li class="alert bad">${esc(err.message)}</li>`;
     }
@@ -260,7 +261,7 @@ function initSearch() {
 // --- page: quality ---------------------------------------------------------------------------
 
 function rankBadge(rank, depth) {
-  if (rank === null) return `<span class="rank rx" title="Не найден среди первых ${depth}">нет</span>`;
+  if (rank === null) return `<span class="rank rx" title="Not in the top ${depth}">none</span>`;
   const cls = rank === 1 ? 'r1' : rank <= 3 ? 'r3' : 'rx';
   return `<span class="rank ${cls}">${rank}</span>`;
 }
@@ -287,8 +288,8 @@ async function initQuality() {
   $('#t-test-mrr').textContent = test.mrr.toFixed(2);
   $('#t-dev-mrr').textContent = dev.mrr.toFixed(2);
 
-  const buckets = [['1-е место', (r) => r === 1], ['2–3', (r) => r >= 2 && r <= 3], ['4–5', (r) => r >= 4 && r <= 5],
-    ['дальше 5-го', (r) => r > 5], ['не найден', (r) => r === null]];
+  const buckets = [['1st place', (r) => r === 1], ['2–3', (r) => r >= 2 && r <= 3], ['4–5', (r) => r >= 4 && r <= 5],
+    ['below 5th', (r) => r > 5], ['not found', (r) => r === null]];
   const count = (qs, f) => qs.filter((x) => f(x.rank)).length;
   const max = Math.max(...buckets.flatMap(([, f]) => [count(dev.questions, f), count(test.questions, f)]), 1);
   $('#ranks').innerHTML = buckets.map(([label, f]) => {
@@ -296,7 +297,7 @@ async function initQuality() {
     return `<div class="hbar"><span class="hb-label">${label}</span>
       <span class="hb-track double"><i style="width:${(d / max) * 100}%"></i><i style="width:${(t / max) * 100}%"></i></span>
       <span class="hb-val">${d} · ${t}</span></div>`;
-  }).join('') + `<p class="muted small">${dev.questions.length} вопросов в dev и ${test.questions.length} в test.</p>`;
+  }).join('') + `<p class="muted small">${dev.questions.length} questions in dev, ${test.questions.length} in test.</p>`;
 
   const rows = [];
   for (const [split, s] of Object.entries(data.splits)) {
@@ -309,9 +310,9 @@ async function initQuality() {
       || (filter === 'miss' && !r.neg && r.rank !== 1) || (filter === 'neg' && r.neg));
     tbody.innerHTML = shown.map((r) => r.neg
       ? `<tr><td><span class="rank neg">—</span></td><td>${esc(r.question)}<span class="split-tag">${r.split}</span></td>
-           <td class="muted" colspan="2">ответа в документах нет — модель должна отказаться</td></tr>`
+           <td class="muted" colspan="2">no answer in the docs: the model should refuse</td></tr>`
       : `<tr><td>${rankBadge(r.rank, data.depth)}</td>
-           <td><a href="/search?q=${encodeURIComponent(r.question)}" title="Открыть в поиске">${esc(r.question)}</a><span class="split-tag">${r.split}</span></td>
+           <td><a href="/search?q=${encodeURIComponent(r.question)}" title="Open in Search">${esc(r.question)}</a><span class="split-tag">${r.split}</span></td>
            <td class="mono">${r.expected.map(esc).join('<br>')}</td>
            <td class="mono${r.rank === 1 ? ' muted' : ''}">${esc(r.top_source)}</td></tr>`).join('');
   };
@@ -338,7 +339,7 @@ async function initDocuments() {
       const shown = files.filter((f) => !n || f.file.toLowerCase().includes(n) || f.title.toLowerCase().includes(n));
       $('#docs tbody').innerHTML = shown.map((f) => `<tr><td>${esc(f.title)}</td><td class="mono muted">${esc(f.file)}</td>
         <td class="num">${f.chunks}</td><td class="num">${fmt(f.chars)}</td></tr>`).join('')
-        || '<tr><td colspan="4" class="muted">Ничего не найдено.</td></tr>';
+        || '<tr><td colspan="4" class="muted">Nothing found.</td></tr>';
     };
     $('#doc-filter').oninput = (e) => draw(e.target.value.trim());
     draw($('#doc-filter').value.trim());
@@ -348,12 +349,12 @@ async function initDocuments() {
   $('#reindex').addEventListener('click', async (e) => {
     const btn = e.target;
     btn.disabled = true;
-    $('#reindex-meta').textContent = 'Обновляю…';
+    $('#reindex-meta').textContent = 'Updating…';
     try {
       const r = await api('/api/index', {});
       $('#reindex-meta').textContent = r.added || r.updated || r.removed
-        ? `добавлено ${r.added}, изменено ${r.updated}, удалено ${r.removed} фрагментов · ${r.seconds} с`
-        : `изменений нет · ${r.seconds} с`;
+        ? `${r.added} chunks added, ${r.updated} changed, ${r.removed} removed · ${r.seconds} s`
+        : `no changes · ${r.seconds} s`;
       await load();
       refreshStatus();
     } catch (err) {

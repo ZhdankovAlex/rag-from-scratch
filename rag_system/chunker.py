@@ -31,7 +31,7 @@ class Chunk:
 
         Parts of a split section do not repeat its "##" header, and no chunk
         contains the document title, so without this a chunk loses the topic
-        it belongs to (e.g. a table under "Доступные ответы" in custom-response.md).
+        it belongs to (e.g. a table under the "Available responses" section of custom-response.md).
         The stored and cited text stays chunk.text.
         """
         return f"{self.title}\n\n{self.text}"

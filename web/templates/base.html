@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="ru">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{% block title %}Справка{% endblock %}</title>
+<title>{% block title %}Docs Q&amp;A{% endblock %}</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>">
 <link rel="stylesheet" href="/static/app.css?v={{ v }}">
 <script>
@@ -13,9 +13,9 @@
 </head>
 <body data-page="{{ active }}">
 <aside class="sidenav">
-  <a class="brand" href="/" title="Справка">
+  <a class="brand" href="/" title="Docs Q&amp;A">
     <span class="brand-ic" aria-hidden="true">📖</span>
-    <span class="nav-label">Справка</span>
+    <span class="nav-label">Docs Q&amp;A</span>
   </a>
   <nav>
     {% for key, label, icon in nav %}
@@ -25,10 +25,10 @@
     {% endfor %}
   </nav>
   <div class="sidenav-foot">
-    <div class="status-pill" id="st-index" title="Сколько фрагментов документации в базе"><i class="dot-st"></i><span class="nav-label" id="st-index-text">база…</span></div>
-    <div class="status-pill" id="st-llm" title="Локальная LLM"><i class="dot-st"></i><span class="nav-label" id="st-llm-text">Ollama…</span></div>
-    <button class="nav-toggle" id="nav-toggle" type="button" title="Свернуть / развернуть панель" aria-label="Свернуть / развернуть панель">
-      <span class="nav-ic" aria-hidden="true">«</span><span class="nav-label">Свернуть</span>
+    <div class="status-pill" id="st-index" title="Number of doc chunks in the index"><i class="dot-st"></i><span class="nav-label" id="st-index-text">index…</span></div>
+    <div class="status-pill" id="st-llm" title="Local LLM"><i class="dot-st"></i><span class="nav-label" id="st-llm-text">Ollama…</span></div>
+    <button class="nav-toggle" id="nav-toggle" type="button" title="Collapse / expand the panel" aria-label="Collapse / expand the panel">
+      <span class="nav-ic" aria-hidden="true">«</span><span class="nav-label">Collapse</span>
     </button>
   </div>
 </aside>

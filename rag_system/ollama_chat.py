@@ -20,6 +20,8 @@ TEMPERATURE = 0.1
 # Answers on CPU can take minutes; fail only when the server is clearly stuck.
 TIMEOUT_SECONDS = 600
 
+# The prompt stays in Russian on purpose: the docs and the questions are Russian,
+# and the model answers in the language of the question.
 SYSTEM_PROMPT = f"""\
 Ты — ассистент по технической документации.
 
@@ -49,12 +51,16 @@ class ModelDerailedError(OllamaError):
 # English, so such characters in a reply mean the model has derailed: small Qwen
 # models sometimes switch to Chinese mid-answer and then write unrelated text.
 DERAILED_SCRIPT = re.compile(r"[぀-ヿ㐀-䶿一-鿿가-힯]")
-DERAILED_MESSAGE = "Модель сбилась и начала отвечать на другом языке. Генерация остановлена — задайте вопрос ещё раз."
+DERAILED_MESSAGE = (
+    "The model went off track and started writing in another language. Generation stopped: ask the question again."
+)
 
 
 def build_messages(results: list[dict], question: str) -> list[dict]:
     """
     Build the chat messages: numbered source fragments followed by the question.
+
+    The labels (file, section, question) are in Russian to match the prompt.
 
     Ollama models have no native citations, so each chunk gets a number the
     model is asked to put after the statements it supports.
@@ -214,7 +220,7 @@ def answer_question(
     if results is None:
         results = store.search(question, top_k=top_k)
     if not results:
-        return Answer(text="Индекс пуст — сначала проиндексируйте документацию.", sources=[], retrieved=0)
+        return Answer(text="The index is empty. Index the docs first.", sources=[], retrieved=0)
     reply = "".join(stream_reply(results, question, model=model, base_url=base_url))
     return parse_answer(reply, results)
 

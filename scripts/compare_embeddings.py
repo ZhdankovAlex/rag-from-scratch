@@ -3,7 +3,7 @@ Compare embedding setups on the eval question set and save the results.
 
 Each setup embeds the same chunks in memory (no Chroma) and is scored with
 the same hit@k / MRR as `python main.py eval`. Results go to
-eval/experiments.json, which the web UI shows on the "Качество" page.
+eval/experiments.json, which the web UI shows on the "Quality" page.
 
 Setups:
     * BAAI/bge-small-en-v1.5 — an English-only model of the same size;
@@ -59,10 +59,10 @@ class Setup:
 
 E5 = "intfloat/multilingual-e5-small"
 SETUPS = [
-    Setup("bge-small-en-v1.5 (англоязычная)", "BAAI/bge-small-en-v1.5"),
-    Setup("multilingual-e5-small, только текст фрагмента", E5, "query: ", "passage: ", with_title=False),
-    Setup("+ заголовок «Документ > Раздел», без префиксов", E5),
-    Setup("+ префиксы query: / passage: (текущий)", E5, "query: ", "passage: ", current=True),
+    Setup("bge-small-en-v1.5 (English-only)", "BAAI/bge-small-en-v1.5"),
+    Setup("multilingual-e5-small, chunk text only", E5, "query: ", "passage: ", with_title=False),
+    Setup("+ \"Document > Section\" title, no prefixes", E5),
+    Setup("+ query: / passage: prefixes (current)", E5, "query: ", "passage: ", current=True),
 ]
 
 

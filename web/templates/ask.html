@@ -1,35 +1,35 @@
 {% extends "base.html" %}
-{% block title %}Вопрос · Справка{% endblock %}
+{% block title %}Question · Docs Q&amp;A{% endblock %}
 {% block content %}
 <section class="card hero">
-  <h1>Вопрос</h1>
-  <p class="muted">Модель отвечает только по найденным местам документации и ставит ссылки на них.</p>
+  <h1>Question</h1>
+  <p class="muted">The model answers only from the passages that search finds in the docs and cites them. The docs are in Russian, so ask in Russian.</p>
   <form id="ask-form" class="query-form">
-    <textarea id="q" class="field" rows="1" placeholder="Например: как выполнить задачу после ответа клиенту?" required></textarea>
-    <button class="primary" id="ask-btn" type="submit">Спросить</button>
-    <button class="stop" id="stop-btn" type="button" hidden>Остановить</button>
+    <textarea id="q" class="field" rows="1" placeholder="e.g. как выполнить задачу после ответа клиенту?" required></textarea>
+    <button class="primary" id="ask-btn" type="submit">Ask</button>
+    <button class="stop" id="stop-btn" type="button" hidden>Stop</button>
   </form>
   {% if examples %}
   <div class="chips examples" id="examples">
-    <span class="muted small">Например:</span>
+    <span class="muted small">Try:</span>
     {% for text, negative in examples %}
-    <button type="button" class="chip{{ ' neg' if negative }}"{% if negative %} title="Ответа в документах нет — модель должна честно отказаться"{% endif %}>{{ text }}</button>
+    <button type="button" class="chip{{ ' neg' if negative }}"{% if negative %} title="The docs have no answer to this: the model should say so"{% endif %}>{{ text }}</button>
     {% endfor %}
   </div>
   {% endif %}
 </section>
 
 <section class="card" id="answer-card" hidden>
-  <div class="card-head"><h2>Ответ</h2><span class="muted small" id="answer-meta"></span></div>
+  <div class="card-head"><h2>Answer</h2><span class="muted small" id="answer-meta"></span></div>
   <div id="answer-wait" class="wait" hidden><i class="pulse"></i><span id="wait-text"></span></div>
   <div id="answer-error" class="alert bad" hidden></div>
   <div class="answer-text" id="answer-text"></div>
-  <div id="answer-warn" class="alert warn" hidden>В ответе нет ни одной ссылки — он мог прийти из общих знаний модели, а не из документации.</div>
+  <div id="answer-warn" class="alert warn" hidden>The answer cites nothing, so it may come from the model's general knowledge rather than the docs.</div>
 </section>
 
 <section class="card" id="hits-card" hidden>
-  <div class="card-head"><h2>Откуда взят ответ</h2><span class="muted small" id="hits-meta"></span></div>
-  <p class="muted small">Места в документации, которые поиск нашёл и передал модели. Отмечены те, на которые ссылается ответ; клик раскрывает текст.</p>
+  <div class="card-head"><h2>Sources</h2><span class="muted small" id="hits-meta"></span></div>
+  <p class="muted small">Passages that search found and passed to the model. The ones the answer cites are highlighted; click a passage to see its text.</p>
   <ol class="hits" id="hits"></ol>
 </section>
 {% endblock %}

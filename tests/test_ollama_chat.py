@@ -139,5 +139,5 @@ def test_stream_reply_stops_when_the_model_switches_to_chinese(monkeypatch):
     pieces = ollama_chat.stream_reply(RESULTS, "q")
 
     assert next(pieces) == "Чтобы разрешить запросы,"
-    with pytest.raises(ollama_chat.ModelDerailedError, match="другом языке"):
+    with pytest.raises(ollama_chat.ModelDerailedError, match="another language"):
         next(pieces)

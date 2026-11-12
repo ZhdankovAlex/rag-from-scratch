@@ -1,29 +1,29 @@
 {% extends "base.html" %}
-{% block title %}Документы · Справка{% endblock %}
+{% block title %}Documents · Docs Q&amp;A{% endblock %}
 {% block content %}
 <section class="card hero">
   <div class="hero-head">
     <div>
-      <h1>Документы</h1>
-      <p class="muted">Файлы из папки <code>docs/</code>, по которым идёт поиск. Добавили или изменили файлы — нажмите «Обновить базу».</p>
+      <h1>Documents</h1>
+      <p class="muted">The files in <code>docs/</code> that search runs over. After adding or changing files, click "Update index".</p>
     </div>
     <div class="actions-col">
-      <button class="primary" id="reindex" type="button">Обновить базу</button>
+      <button class="primary" id="reindex" type="button">Update index</button>
       <span class="muted small" id="reindex-meta"></span>
     </div>
   </div>
 </section>
 
 <div class="tiles" style="--n:3">
-  <div class="tile"><b id="c-docs">…</b><span>документов</span></div>
-  <div class="tile"><b id="c-chunks">…</b><span>фрагментов в базе</span></div>
-  <div class="tile"><b id="c-chars">…</b><span>символов текста</span></div>
+  <div class="tile"><b id="c-docs">…</b><span>documents</span></div>
+  <div class="tile"><b id="c-chunks">…</b><span>chunks in the index</span></div>
+  <div class="tile"><b id="c-chars">…</b><span>characters of text</span></div>
 </div>
 
 <section class="card">
-  <div class="card-head"><h2>Список</h2><input type="search" id="doc-filter" placeholder="Фильтр по названию или файлу"></div>
+  <div class="card-head"><h2>Files</h2><input type="search" id="doc-filter" placeholder="Filter by title or file"></div>
   <table class="data" id="docs">
-    <thead><tr><th>Документ</th><th>Файл</th><th class="num">Фрагментов</th><th class="num">Символов</th></tr></thead>
+    <thead><tr><th>Document</th><th>File</th><th class="num">Chunks</th><th class="num">Characters</th></tr></thead>
     <tbody></tbody>
   </table>
 </section>

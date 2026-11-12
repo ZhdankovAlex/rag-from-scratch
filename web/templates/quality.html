@@ -1,44 +1,44 @@
 {% extends "base.html" %}
-{% block title %}Качество · Справка{% endblock %}
+{% block title %}Quality · Docs Q&amp;A{% endblock %}
 {% block content %}
 <section class="card hero">
-  <h1>Качество поиска</h1>
-  <p class="muted">Набор вопросов, для каждого известно, в каком файле ответ. Проверяем, находит ли поиск этот файл и на каком месте.
-    Часть <b>dev</b> использовалась при настройке, часть <b>test</b> — отложена и в настройке не участвовала.</p>
+  <h1>Search quality</h1>
+  <p class="muted">A set of questions where we know which file holds each answer. For each one we check whether search finds that file and in which position.
+    The <b>dev</b> part was used while tuning search; the <b>test</b> part was set aside and not used for tuning.</p>
 </section>
 
 <div class="tiles" style="--n:4" id="q-tiles">
-  <div class="tile"><b id="t-test-h1">…</b><span>нужный файл на 1-м месте (test)</span></div>
-  <div class="tile"><b id="t-test-h3">…</b><span>нужный файл в первой тройке (test)</span></div>
-  <div class="tile"><b id="t-test-mrr">…</b><span>MRR, test (1 — всегда первым)</span></div>
+  <div class="tile"><b id="t-test-h1">…</b><span>right file in 1st place (test)</span></div>
+  <div class="tile"><b id="t-test-h3">…</b><span>right file in the top 3 (test)</span></div>
+  <div class="tile"><b id="t-test-mrr">…</b><span>MRR, test (1 = always first)</span></div>
   <div class="tile"><b id="t-dev-mrr">…</b><span>MRR, dev</span></div>
 </div>
 
 <section class="card">
-  <h2>На каком месте находится нужный файл</h2>
+  <h2>Position of the right file</h2>
   <div class="legend small"><span><i class="dot base"></i> dev</span><span><i class="dot ok"></i> test</span></div>
   <div id="ranks"></div>
 </section>
 
 <section class="card">
-  <h2>Что влияет на качество</h2>
-  <p class="muted small">MRR для разных настроек поиска на тех же документах и вопросах. Различия меньше ~0.04 — это один вопрос из 24, то есть шум.</p>
-  <div id="experiments"><p class="muted small">Загрузка…</p></div>
+  <h2>What changes the quality</h2>
+  <p class="muted small">MRR for different search setups on the same documents and questions. A difference under ~0.04 is one question out of 24, which is noise.</p>
+  <div id="experiments"><p class="muted small">Loading…</p></div>
 </section>
 
 <section class="card">
   <div class="table-head">
-    <h2>Вопросы</h2>
+    <h2>Questions</h2>
     <div class="feed-filter" id="q-filter">
-      <button type="button" data-f="all" class="on">все</button>
+      <button type="button" data-f="all" class="on">all</button>
       <button type="button" data-f="dev">dev</button>
       <button type="button" data-f="test">test</button>
-      <button type="button" data-f="miss">не на 1-м месте</button>
-      <button type="button" data-f="neg">ответа нет в документах</button>
+      <button type="button" data-f="miss">not in 1st place</button>
+      <button type="button" data-f="neg">no answer in the docs</button>
     </div>
   </div>
   <table class="data" id="q-table">
-    <thead><tr><th>Место</th><th>Вопрос</th><th>Где ответ</th><th>Что нашлось первым</th></tr></thead>
+    <thead><tr><th>Place</th><th>Question</th><th>Answer is in</th><th>Found first</th></tr></thead>
     <tbody></tbody>
   </table>
 </section>

@@ -50,10 +50,10 @@ app.mount("/static", StaticFiles(directory=WEB_DIR / "static"), name="static")
 
 # (path, label, icon); the icon stays visible when the side panel is collapsed
 NAV = [
-    ("ask", "Вопрос", "💬"),
-    ("search", "Поиск", "🔎"),
-    ("quality", "Качество", "📈"),
-    ("documents", "Документы", "📚"),
+    ("ask", "Question", "💬"),
+    ("search", "Search", "🔎"),
+    ("quality", "Quality", "📈"),
+    ("documents", "Documents", "📚"),
 ]
 # Cache-busting suffix for static files: changes on every server start.
 STATIC_VERSION = str(int(time.time()))
@@ -103,10 +103,11 @@ def format_results(results: list[dict]) -> list[ChunkHit]:
 
 def example_questions() -> list[tuple[str, bool]]:
     """
-    Pick sample questions for the "Вопрос" page from the eval set.
+    Pick sample questions for the "Question" page from the eval set.
 
     The eval set is written for the current docs/, so the samples always match
-    the documents. Three answerable questions and one with no answer in the docs.
+    the documents (Russian, like the docs). Three answerable questions and one
+    with no answer in the docs.
 
     Returns:
         (question, is_negative) pairs; empty when the eval file is missing.
@@ -296,7 +297,7 @@ def ask_stream(body: AskRequest) -> StreamingResponse:
     * `{"type": "done", ...}` — the final answer, same fields as `/api/ask`;
     * `{"type": "error", "detail": "..."}` — Ollama failed.
 
-    Closing the connection (the UI's "Остановить" button) stops generation in Ollama.
+    Closing the connection (the UI's "Stop" button) stops generation in Ollama.
     """
     model, url = ollama_settings()
     started = time.perf_counter()

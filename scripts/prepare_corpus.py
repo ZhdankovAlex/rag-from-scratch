@@ -6,10 +6,10 @@ The corpus is a fixed selection of pages from the Russian FastAPI documentation
 into a flat docs/ directory under unique names and lightly cleaned of MkDocs-only
 markup that means nothing outside the FastAPI site:
 
-* heading anchors such as ``## Шаги { #steps }`` lose the ``{ #steps }`` part;
+* heading anchors such as ``## Steps { #steps }`` lose the ``{ #steps }`` part;
 * code include directives such as ``{* ../../docs_src/body/tutorial001_py310.py *}``
   are dropped, because the referenced files are not part of the corpus;
-* admonition fences (``/// tip | Совет`` ... ``///``) become a plain ``Совет:`` line;
+* admonition fences (``/// tip | Tip`` ... ``///``) become a plain ``Tip:`` line;
   code tab fences (``//// tab | Python 3.10+`` ... ``////``) are dropped.
 
 Usage::
