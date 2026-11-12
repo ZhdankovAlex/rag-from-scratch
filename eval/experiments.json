@@ -23,7 +23,7 @@
       }
     },
     {
-      "label": "multilingual-e5-small, только текст чанка",
+      "label": "multilingual-e5-small, только текст фрагмента",
       "model": "intfloat/multilingual-e5-small",
       "current": false,
       "dev": {

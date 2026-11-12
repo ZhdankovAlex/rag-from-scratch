@@ -60,7 +60,7 @@ class Setup:
 E5 = "intfloat/multilingual-e5-small"
 SETUPS = [
     Setup("bge-small-en-v1.5 (англоязычная)", "BAAI/bge-small-en-v1.5"),
-    Setup("multilingual-e5-small, только текст чанка", E5, "query: ", "passage: ", with_title=False),
+    Setup("multilingual-e5-small, только текст фрагмента", E5, "query: ", "passage: ", with_title=False),
     Setup("+ заголовок «Документ > Раздел», без префиксов", E5),
     Setup("+ префиксы query: / passage: (текущий)", E5, "query: ", "passage: ", current=True),
 ]
