@@ -2,6 +2,7 @@ import json
 import re
 import urllib.error
 import urllib.request
+from collections.abc import Iterator
 
 from .answer import NO_ANSWER_TEXT, Answer, Source
 from .vector_store import VectorStore
@@ -38,6 +39,17 @@ MARKER = re.compile(r"([ \t]*)\[(\d+(?:\s*,\s*\d+)*)\]")
 
 class OllamaError(Exception):
     """Raised when the Ollama server is unreachable or rejects the request."""
+
+
+class ModelDerailedError(OllamaError):
+    """Raised when the model's reply slides into another script (e.g. Qwen switching to Chinese)."""
+
+
+# Chinese, Japanese and Korean characters. The docs and questions are Russian or
+# English, so such characters in a reply mean the model has derailed: small Qwen
+# models sometimes switch to Chinese mid-answer and then write unrelated text.
+DERAILED_SCRIPT = re.compile(r"[぀-ヿ㐀-䶿一-鿿가-힯]")
+DERAILED_MESSAGE = "Модель сбилась и начала отвечать на другом языке. Генерация остановлена — задайте вопрос ещё раз."
 
 
 def build_messages(results: list[dict], question: str) -> list[dict]:
@@ -107,6 +119,69 @@ def parse_answer(text: str, results: list[dict]) -> Answer:
     )
 
 
+def stream_reply(
+    results: list[dict], question: str, model: str = DEFAULT_MODEL, base_url: str = DEFAULT_URL,
+) -> Iterator[str]:
+    """
+    Stream the model's raw reply (with "[n]" markers) piece by piece.
+
+    The HTTP connection stays open while the generator is consumed; closing
+    the generator early (e.g. the user pressed "stop") closes the connection,
+    and Ollama stops generating.
+
+    Args:
+        results: Retrieved chunks to pass as numbered fragments.
+        question: The user's question.
+        model: Ollama model name, e.g. "qwen2.5:7b".
+        base_url: Ollama server address.
+
+    Yields:
+        Pieces of the reply text in order.
+
+    Raises:
+        OllamaError: The server is not running, the model is not pulled,
+            or the request failed.
+        ModelDerailedError: The reply switched to Chinese/Japanese/Korean;
+            generation is stopped at that point.
+    """
+    payload = {
+        "model": model,
+        "messages": build_messages(results, question),
+        "stream": True,
+        "options": {"num_ctx": CONTEXT_TOKENS, "temperature": TEMPERATURE},
+    }
+    request = urllib.request.Request(
+        f"{base_url}/api/chat",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+    )
+    try:
+        response = urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS)
+    except urllib.error.HTTPError as error:
+        detail = error.read().decode("utf-8", errors="replace")
+        if error.code == 404 and "not found" in detail:
+            raise OllamaError(f"Model {model} is not pulled. Run `ollama pull {model}`.") from error
+        raise OllamaError(f"Ollama returned HTTP {error.code}: {detail}") from error
+    except urllib.error.URLError as error:
+        raise OllamaError(f"Ollama is not running at {base_url}. Start the Ollama app or `ollama serve`.") from error
+
+    with response:
+        for line in response:  # one JSON object per line
+            if not line.strip():
+                continue
+            event = json.loads(line.decode("utf-8"))
+            if "error" in event:
+                raise OllamaError(f"Ollama error: {event['error']}")
+            piece = event.get("message", {}).get("content", "")
+            if DERAILED_SCRIPT.search(piece):
+                # Leaving the with-block closes the connection, so Ollama stops generating.
+                raise ModelDerailedError(DERAILED_MESSAGE)
+            if piece:
+                yield piece
+            if event.get("done"):
+                return
+
+
 def answer_question(
     question: str,
     store: VectorStore,
@@ -124,8 +199,8 @@ def answer_question(
         top_k: How many chunks to retrieve and pass to the model.
         model: Ollama model name, e.g. "qwen2.5:7b".
         base_url: Ollama server address.
-        results: Chunks already retrieved for this question (e.g. shown to the
-            user while the model thinks); searched with top_k when not given.
+        results: Chunks already retrieved for this question; searched with
+            top_k when not given.
 
     Returns:
         The model's answer with cited sources.
@@ -133,35 +208,15 @@ def answer_question(
     Raises:
         OllamaError: The server is not running, the model is not pulled,
             or the request failed.
+        ModelDerailedError: The reply switched to Chinese/Japanese/Korean;
+            generation is stopped at that point.
     """
     if results is None:
         results = store.search(question, top_k=top_k)
     if not results:
         return Answer(text="Индекс пуст — сначала проиндексируйте документацию.", sources=[], retrieved=0)
-
-    payload = {
-        "model": model,
-        "messages": build_messages(results, question),
-        "stream": False,
-        "options": {"num_ctx": CONTEXT_TOKENS, "temperature": TEMPERATURE},
-    }
-    request = urllib.request.Request(
-        f"{base_url}/api/chat",
-        data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
-    )
-    try:
-        with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:
-            body = json.loads(response.read().decode("utf-8"))
-    except urllib.error.HTTPError as error:
-        detail = error.read().decode("utf-8", errors="replace")
-        if error.code == 404 and "not found" in detail:
-            raise OllamaError(f"Model {model} is not pulled. Run `ollama pull {model}`.") from error
-        raise OllamaError(f"Ollama returned HTTP {error.code}: {detail}") from error
-    except urllib.error.URLError as error:
-        raise OllamaError(f"Ollama is not running at {base_url}. Start the Ollama app or `ollama serve`.") from error
-
-    return parse_answer(body["message"]["content"], results)
+    reply = "".join(stream_reply(results, question, model=model, base_url=base_url))
+    return parse_answer(reply, results)
 
 
 if __name__ == "__main__":

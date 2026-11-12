@@ -1,46 +1,35 @@
 {% extends "base.html" %}
-{% block title %}Спросить · rag-from-scratch{% endblock %}
+{% block title %}Вопрос · Справка{% endblock %}
 {% block content %}
 <section class="card hero">
-  <div class="eyebrow">Вопрос по документации FastAPI · ответ локальной LLM со ссылками на источники</div>
-  <form id="ask-form" class="ask-form">
-    <textarea id="q" rows="2" placeholder="Например: как разрешить запросы к API с фронтенда на другом домене?" required></textarea>
-    <div class="ask-actions">
-      <label class="muted small">фрагментов
-        <select id="top-k"><option>3</option><option selected>5</option><option>8</option></select>
-      </label>
-      <button class="primary" id="ask-btn" type="submit">Спросить</button>
-    </div>
+  <h1>Вопрос</h1>
+  <p class="muted">Модель отвечает только по найденным местам документации и ставит ссылки на них.</p>
+  <form id="ask-form" class="query-form">
+    <textarea id="q" class="field" rows="1" placeholder="Например: как выполнить задачу после ответа клиенту?" required></textarea>
+    <button class="primary" id="ask-btn" type="submit">Спросить</button>
+    <button class="stop" id="stop-btn" type="button" hidden>Остановить</button>
   </form>
+  {% if examples %}
   <div class="chips examples" id="examples">
-    <span class="muted small">Попробуйте:</span>
-    <button type="button" class="chip">Как выполнить задачу после отправки ответа клиенту?</button>
-    <button type="button" class="chip">Как безопасно хранить пароли пользователей?</button>
-    <button type="button" class="chip">Чем fastapi dev отличается от fastapi run?</button>
-    <button type="button" class="chip neg" title="Ответа в документации нет — модель должна отказаться">Как подключить FastAPI к Apache Kafka?</button>
+    <span class="muted small">Например:</span>
+    {% for text, negative in examples %}
+    <button type="button" class="chip{{ ' neg' if negative }}"{% if negative %} title="Ответа в документах нет — модель должна честно отказаться"{% endif %}>{{ text }}</button>
+    {% endfor %}
   </div>
+  {% endif %}
 </section>
 
-<div class="grid two">
-  <section class="card answer-card">
-    <div class="card-head"><h2>Ответ</h2><span class="muted small" id="answer-meta"></span></div>
-    <div id="answer-empty" class="empty">Задайте вопрос — сначала появятся найденные фрагменты, затем ответ модели.<br>
-      <span class="small">На CPU 7B-модель отвечает около минуты.</span></div>
-    <div id="answer-wait" hidden>
-      <div class="big-bar indeterminate"><i></i><span id="wait-text">Модель читает фрагменты…</span></div>
-    </div>
-    <div id="answer-error" class="alert bad" hidden></div>
-    <div id="answer-body" hidden>
-      <div class="answer-text" id="answer-text"></div>
-      <div id="answer-warn" class="alert warn" hidden>Ответ не ссылается ни на один фрагмент — он мог прийти из общих знаний модели, а не из документации.</div>
-      <h3 class="sub-h">Источники</h3>
-      <ol class="sources" id="sources"></ol>
-    </div>
-  </section>
-  <section class="card">
-    <div class="card-head"><h2>Найденные фрагменты</h2><span class="muted small" id="hits-meta"></span></div>
-    <div id="hits-empty" class="empty">Здесь будут фрагменты, которые поиск передаст модели.</div>
-    <ol class="hits" id="hits"></ol>
-  </section>
-</div>
+<section class="card" id="answer-card" hidden>
+  <div class="card-head"><h2>Ответ</h2><span class="muted small" id="answer-meta"></span></div>
+  <div id="answer-wait" class="wait" hidden><i class="pulse"></i><span id="wait-text"></span></div>
+  <div id="answer-error" class="alert bad" hidden></div>
+  <div class="answer-text" id="answer-text"></div>
+  <div id="answer-warn" class="alert warn" hidden>В ответе нет ни одной ссылки — он мог прийти из общих знаний модели, а не из документации.</div>
+</section>
+
+<section class="card" id="hits-card" hidden>
+  <div class="card-head"><h2>Откуда взят ответ</h2><span class="muted small" id="hits-meta"></span></div>
+  <p class="muted small">Места в документации, которые поиск нашёл и передал модели. Отмечены те, на которые ссылается ответ; клик раскрывает текст.</p>
+  <ol class="hits" id="hits"></ol>
+</section>
 {% endblock %}

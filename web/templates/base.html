@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{% block title %}rag-from-scratch{% endblock %}</title>
+<title>{% block title %}Справка{% endblock %}</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>">
 <link rel="stylesheet" href="/static/app.css?v={{ v }}">
 <script>
@@ -13,9 +13,9 @@
 </head>
 <body data-page="{{ active }}">
 <aside class="sidenav">
-  <a class="brand" href="/" title="rag-from-scratch">
+  <a class="brand" href="/" title="Справка">
     <span class="brand-ic" aria-hidden="true">📖</span>
-    <span class="nav-label">rag-from-scratch</span>
+    <span class="nav-label">Справка</span>
   </a>
   <nav>
     {% for key, label, icon in nav %}
@@ -23,21 +23,18 @@
       <span class="nav-ic" aria-hidden="true">{{ icon }}</span><span class="nav-label">{{ label }}</span>
     </a>
     {% endfor %}
-    <a href="/docs" title="API (Swagger)" target="_blank" rel="noopener">
-      <span class="nav-ic" aria-hidden="true">🧩</span><span class="nav-label">API</span>
-    </a>
   </nav>
   <div class="sidenav-foot">
-    <div class="status-pill" id="st-index" title="Чанков в индексе"><i class="dot-st"></i><span class="nav-label" id="st-index-text">индекс…</span></div>
+    <div class="status-pill" id="st-index" title="Сколько фрагментов документации в базе"><i class="dot-st"></i><span class="nav-label" id="st-index-text">база…</span></div>
     <div class="status-pill" id="st-llm" title="Локальная LLM"><i class="dot-st"></i><span class="nav-label" id="st-llm-text">Ollama…</span></div>
     <button class="nav-toggle" id="nav-toggle" type="button" title="Свернуть / развернуть панель" aria-label="Свернуть / развернуть панель">
       <span class="nav-ic" aria-hidden="true">«</span><span class="nav-label">Свернуть</span>
     </button>
   </div>
 </aside>
-<main class="page">
+<main><div class="page">
 {% block content %}{% endblock %}
-</main>
+</div></main>
 <script src="/static/app.js?v={{ v }}"></script>
 </body>
 </html>

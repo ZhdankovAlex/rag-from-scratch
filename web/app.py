@@ -3,7 +3,7 @@ FastAPI app behind the local web UI.
 
 Pages are Jinja2 templates; everything they show comes from the JSON API below,
 which wraps the same pipeline as the CLI (rag_system). Heavy objects — the
-vector store with its embedding model, the eval report, corpus statistics —
+vector store with its embedding model, the eval report, document statistics —
 are built on first use and cached until the next re-index.
 """
 from __future__ import annotations
@@ -14,17 +14,19 @@ import threading
 import time
 import urllib.error
 import urllib.request
+from collections.abc import Iterator
 from functools import lru_cache
 from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 
 from rag_system import ollama_chat
+from rag_system.answer import Answer
 from rag_system.chunker import Chunk, chunk_documents
 from rag_system.evaluate import SEARCH_DEPTH, evaluate_retrieval, load_questions
 from rag_system.loader import DOCS_DIR, PROJECT_ROOT, load_documents
@@ -48,7 +50,7 @@ app.mount("/static", StaticFiles(directory=WEB_DIR / "static"), name="static")
 
 # (path, label, icon); the icon stays visible when the side panel is collapsed
 NAV = [
-    ("ask", "Спросить", "💬"),
+    ("ask", "Вопрос", "💬"),
     ("search", "Поиск", "🔎"),
     ("quality", "Качество", "📈"),
     ("documents", "Документы", "📚"),
@@ -70,7 +72,7 @@ def get_store() -> VectorStore:
 
 
 @lru_cache(maxsize=1)
-def corpus_chunks() -> tuple[int, list[Chunk]]:
+def document_chunks() -> tuple[int, list[Chunk]]:
     """
     Load and chunk docs/ (no embeddings, takes well under a second).
 
@@ -97,6 +99,30 @@ def format_results(results: list[dict]) -> list[ChunkHit]:
         )
         for rank, r in enumerate(results, 1)
     ]
+
+
+def example_questions() -> list[tuple[str, bool]]:
+    """
+    Pick sample questions for the "Вопрос" page from the eval set.
+
+    The eval set is written for the current docs/, so the samples always match
+    the documents. Three answerable questions and one with no answer in the docs.
+
+    Returns:
+        (question, is_negative) pairs; empty when the eval file is missing.
+    """
+    try:
+        questions = load_questions()
+    except (OSError, ValueError):
+        return []
+    answerable = [(q.question, False) for q in questions if not q.negative][:3]
+    unanswerable = [(q.question, True) for q in questions if q.negative][:1]
+    return answerable + unanswerable
+
+
+def cited_sources(answer: Answer) -> list[SourceOut]:
+    """Convert an answer's sources to API objects."""
+    return [SourceOut(number=s.number, file=s.file, title=s.title, chunk_id=s.chunk_id) for s in answer.sources]
 
 
 # --- API models ----------------------------------------------------------------------------------
@@ -194,9 +220,10 @@ def page(request: Request, page: str) -> HTMLResponse:
     """Render one of the UI pages listed in NAV."""
     if page not in {key for key, _, _ in NAV}:
         raise HTTPException(404, "No such page")
-    return templates.TemplateResponse(
-        request, f"{page}.html", {"nav": NAV, "active": page, "v": STATIC_VERSION},
-    )
+    context = {"nav": NAV, "active": page, "v": STATIC_VERSION}
+    if page == "ask":
+        context["examples"] = example_questions()
+    return templates.TemplateResponse(request, f"{page}.html", context)
 
 
 # --- API -----------------------------------------------------------------------------------------
@@ -249,12 +276,53 @@ def ask(body: AskRequest) -> AskResponse:
         raise HTTPException(503, str(error)) from error
     return AskResponse(
         answer=answer.text,
-        sources=[SourceOut(number=s.number, file=s.file, title=s.title, chunk_id=s.chunk_id) for s in answer.sources],
+        sources=cited_sources(answer),
         unsupported=answer.unsupported,
         results=format_results(results),
         model=model,
         seconds=round(time.perf_counter() - started, 1),
     )
+
+
+@app.post("/api/ask/stream", tags=["answers"], response_class=StreamingResponse)
+def ask_stream(body: AskRequest) -> StreamingResponse:
+    """
+    Answer a question, streaming NDJSON events so the UI can show text as it is generated.
+
+    Events, one JSON object per line:
+
+    * `{"type": "results", "results": [...]}` — the chunks passed to the model;
+    * `{"type": "token", "text": "..."}` — the next piece of the raw reply;
+    * `{"type": "done", ...}` — the final answer, same fields as `/api/ask`;
+    * `{"type": "error", "detail": "..."}` — Ollama failed.
+
+    Closing the connection (the UI's "Остановить" button) stops generation in Ollama.
+    """
+    model, url = ollama_settings()
+    started = time.perf_counter()
+    results = get_store().search(body.question, top_k=body.top_k)
+
+    def events() -> Iterator[str]:
+        hits = format_results(results)
+        yield json.dumps({"type": "results", "results": [h.model_dump() for h in hits]}, ensure_ascii=False) + "\n"
+        pieces: list[str] = []
+        try:
+            for piece in ollama_chat.stream_reply(results, body.question, model=model, base_url=url):
+                pieces.append(piece)
+                yield json.dumps({"type": "token", "text": piece}, ensure_ascii=False) + "\n"
+        except ollama_chat.OllamaError as error:
+            yield json.dumps({"type": "error", "detail": str(error)}, ensure_ascii=False) + "\n"
+            return
+        answer = ollama_chat.parse_answer("".join(pieces), results)
+        done = AskResponse(
+            answer=answer.text,
+            sources=cited_sources(answer),
+            unsupported=answer.unsupported, results=hits, model=model,
+            seconds=round(time.perf_counter() - started, 1),
+        )
+        yield json.dumps({"type": "done", **done.model_dump()}, ensure_ascii=False) + "\n"
+
+    return StreamingResponse(events(), media_type="application/x-ndjson")
 
 
 @app.get("/api/eval", tags=["quality"])
@@ -295,7 +363,7 @@ def experiments() -> dict:
 @app.get("/api/documents", tags=["documents"])
 def documents_overview() -> dict:
     """Documents in docs/ with chunk counts and sizes, plus the chunk length distribution."""
-    documents, chunks = corpus_chunks()
+    documents, chunks = document_chunks()
     by_file: dict[str, dict] = {}
     for chunk in chunks:
         entry = by_file.setdefault(
@@ -326,8 +394,8 @@ def reindex() -> IndexResponse:
     """Re-read docs/ and sync the vector store: only new or changed chunks are embedded."""
     with _index_lock:
         started = time.perf_counter()
-        corpus_chunks.cache_clear()
-        documents, chunks = corpus_chunks()
+        document_chunks.cache_clear()
+        documents, chunks = document_chunks()
         store = get_store()
         stats = store.sync_chunks(chunks)
         _eval_cache.clear()
