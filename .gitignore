@@ -10,3 +10,6 @@ venv/
 
 # Local vector store (rebuilt by `python main.py index`)
 chroma_db/
+
+# Local editor / assistant settings
+.claude/
