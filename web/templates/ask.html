@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Спросить · rag-from-scratch{% endblock %}
+{% block content %}
+<section class="card hero">
+  <div class="eyebrow">Вопрос по документации FastAPI · ответ локальной LLM со ссылками на источники</div>
+  <form id="ask-form" class="ask-form">
+    <textarea id="q" rows="2" placeholder="Например: как разрешить запросы к API с фронтенда на другом домене?" required></textarea>
+    <div class="ask-actions">
+      <label class="muted small">фрагментов
+        <select id="top-k"><option>3</option><option selected>5</option><option>8</option></select>
+      </label>
+      <button class="primary" id="ask-btn" type="submit">Спросить</button>
+    </div>
+  </form>
+  <div class="chips examples" id="examples">
+    <span class="muted small">Попробуйте:</span>
+    <button type="button" class="chip">Как выполнить задачу после отправки ответа клиенту?</button>
+    <button type="button" class="chip">Как безопасно хранить пароли пользователей?</button>
+    <button type="button" class="chip">Чем fastapi dev отличается от fastapi run?</button>
+    <button type="button" class="chip neg" title="Ответа в документации нет — модель должна отказаться">Как подключить FastAPI к Apache Kafka?</button>
+  </div>
+</section>
+
+<div class="grid two">
+  <section class="card answer-card">
+    <div class="card-head"><h2>Ответ</h2><span class="muted small" id="answer-meta"></span></div>
+    <div id="answer-empty" class="empty">Задайте вопрос — сначала появятся найденные фрагменты, затем ответ модели.<br>
+      <span class="small">На CPU 7B-модель отвечает около минуты.</span></div>
+    <div id="answer-wait" hidden>
+      <div class="big-bar indeterminate"><i></i><span id="wait-text">Модель читает фрагменты…</span></div>
+    </div>
+    <div id="answer-error" class="alert bad" hidden></div>
+    <div id="answer-body" hidden>
+      <div class="answer-text" id="answer-text"></div>
+      <div id="answer-warn" class="alert warn" hidden>Ответ не ссылается ни на один фрагмент — он мог прийти из общих знаний модели, а не из документации.</div>
+      <h3 class="sub-h">Источники</h3>
+      <ol class="sources" id="sources"></ol>
+    </div>
+  </section>
+  <section class="card">
+    <div class="card-head"><h2>Найденные фрагменты</h2><span class="muted small" id="hits-meta"></span></div>
+    <div id="hits-empty" class="empty">Здесь будут фрагменты, которые поиск передаст модели.</div>
+    <ol class="hits" id="hits"></ol>
+  </section>
+</div>
+{% endblock %}

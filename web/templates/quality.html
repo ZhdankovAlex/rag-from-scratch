@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Качество · rag-from-scratch{% endblock %}
+{% block content %}
+<section class="card hero">
+  <div class="hero-head">
+    <div>
+      <div class="eyebrow">Качество поиска · eval/retrieval_questions.json</div>
+      <h1>Находит ли поиск документ с ответом</h1>
+      <p class="muted small">hit@k — доля вопросов, где нужный файл есть в top-k; MRR — средний обратный ранг первого попадания.
+        <b>dev</b> — на нём выбирались настройки, <b>test</b> — отложенная часть.</p>
+    </div>
+  </div>
+</section>
+
+<div class="tiles wide" style="--n:5" id="q-tiles">
+  <div class="tile"><b id="t-dev-mrr">…</b><span>MRR · dev</span></div>
+  <div class="tile"><b id="t-test-mrr">…</b><span>MRR · test</span></div>
+  <div class="tile"><b id="t-test-h1">…</b><span>hit@1 · test</span></div>
+  <div class="tile"><b id="t-test-h3">…</b><span>hit@3 · test</span></div>
+  <div class="tile"><b id="t-count">…</b><span>вопросов</span></div>
+</div>
+
+<div class="grid two">
+  <section class="card">
+    <h2>Ранг первого попадания</h2>
+    <div class="legend small"><span><i class="dot base"></i> dev</span><span><i class="dot ok"></i> test</span></div>
+    <div id="ranks"></div>
+  </section>
+  <section class="card">
+    <h2>Что влияет на качество <span class="muted small">MRR, тот же корпус и вопросы</span></h2>
+    <div id="experiments"><p class="muted small">Загрузка…</p></div>
+  </section>
+</div>
+
+<section class="card">
+  <div class="table-head">
+    <h2>Вопросы</h2>
+    <div class="feed-filter" id="q-filter">
+      <button type="button" data-f="all" class="on">все</button>
+      <button type="button" data-f="dev">dev</button>
+      <button type="button" data-f="test">test</button>
+      <button type="button" data-f="miss">не на 1-м месте</button>
+      <button type="button" data-f="neg">без ответа в корпусе</button>
+    </div>
+  </div>
+  <table class="data" id="q-table">
+    <thead><tr><th>Ранг</th><th>Вопрос</th><th>Ожидаемый файл</th><th>Первым нашёлся</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</section>
+{% endblock %}

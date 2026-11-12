@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Поиск · rag-from-scratch{% endblock %}
+{% block content %}
+<section class="card hero">
+  <div class="eyebrow">Семантический поиск · без LLM, работает без Ollama</div>
+  <form id="search-form" class="search-form">
+    <input type="search" id="sq" placeholder="Что ищем? Например: загрузка файлов" required>
+    <label class="muted small">top-k
+      <select id="s-top-k"><option>5</option><option selected>10</option><option>20</option></select>
+    </label>
+    <button class="primary" type="submit">Найти</button>
+  </form>
+</section>
+
+<div class="tiles wide" style="--n:4" id="s-tiles" hidden>
+  <div class="tile"><b id="t-ms">–</b><span>мс на запрос</span></div>
+  <div class="tile"><b id="t-top">–</b><span>сходство лучшего чанка</span></div>
+  <div class="tile"><b id="t-files">–</b><span>разных документов в выдаче</span></div>
+  <div class="tile"><b id="t-best">–</b><span>лучший документ</span></div>
+</div>
+
+<section class="card">
+  <div class="card-head"><h2>Результаты</h2><span class="muted small">клик по фрагменту раскрывает текст</span></div>
+  <div id="s-empty" class="empty">Введите запрос — покажу ближайшие чанки и их косинусное сходство с запросом.</div>
+  <ol class="hits" id="s-hits"></ol>
+</section>
+{% endblock %}

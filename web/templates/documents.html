@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Документы · rag-from-scratch{% endblock %}
+{% block content %}
+<section class="card hero">
+  <div class="hero-head">
+    <div>
+      <div class="eyebrow">Документы · docs/</div>
+      <h1>Русская документация FastAPI</h1>
+      <p class="muted small">44 страницы из <a href="https://github.com/fastapi/fastapi" target="_blank" rel="noopener">fastapi/fastapi</a>
+        (© Sebastián Ramírez, MIT). Режутся по заголовкам <code>##</code>, длинные разделы — на части по 1000 символов с перекрытием 200.</p>
+    </div>
+    <div class="actions-col">
+      <button class="primary" id="reindex" type="button">Переиндексировать</button>
+      <span class="muted small" id="reindex-meta">пересчитываются только изменённые чанки</span>
+    </div>
+  </div>
+</section>
+
+<div class="tiles wide" style="--n:4">
+  <div class="tile"><b id="c-docs">…</b><span>документов</span></div>
+  <div class="tile"><b id="c-chunks">…</b><span>чанков</span></div>
+  <div class="tile"><b id="c-avg">…</b><span>символов в среднем чанке</span></div>
+  <div class="tile"><b id="c-chars">…</b><span>символов всего</span></div>
+</div>
+
+<div class="grid two">
+  <section class="card">
+    <h2>Длина чанков <span class="muted small">символов</span></h2>
+    <div id="histogram"></div>
+  </section>
+  <section class="card">
+    <div class="card-head"><h2>Документы</h2><input type="search" id="doc-filter" placeholder="Фильтр по файлу или названию"></div>
+    <div class="doc-list" id="docs"></div>
+  </section>
+</div>
+{% endblock %}
